@@ -10,7 +10,7 @@ public class OrbitCamera : MonoBehaviour
 
     public Transform _focus;
 
-    private void OnEnable()
+    /*private void OnEnable()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -19,7 +19,7 @@ public class OrbitCamera : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-    }
+    }*/
     //Its exactly like Update, expect it runs late, which is useful for camera code.
     private void LateUpdate()
     {

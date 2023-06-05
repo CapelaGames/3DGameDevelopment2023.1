@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//test
 public class RBPlayerController : MonoBehaviour
 {
     public float speed = 10;
@@ -11,15 +10,21 @@ public class RBPlayerController : MonoBehaviour
     public Camera camera;
     public float groundCheckRadius;
     public float groundCheckDistance;
+
+    public Vector3 offset;
     
     private Rigidbody _rigidbody;
+    
     private Vector3 _input;
     private bool _isGrounded;
+
+    private Animator _animator;
     
 
     void Start()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        _animator = GetComponent<Animator>();
     }
     
     void Update()
@@ -34,45 +39,78 @@ public class RBPlayerController : MonoBehaviour
 
         _input = camera.transform.TransformDirection(_input);
         _input.y = 0f;
+
+        UpdateAnimation();
+    }
+
+    void UpdateAnimation()
+    {
+        if(_rigidbody.velocity.magnitude > 0.01f)// && _isGrounded)
+        //if (_input.magnitude > 0.01f)
+        {
+            _animator.SetBool("isRunning", true);
+        }
+        else
+        {
+            _animator.SetBool("isRunning", false);
+        }
     }
 
     private void FixedUpdate()
     {
         _isGrounded = CheckGrounded();
-
-        //_rigidbody.MovePosition(_rigidbody.position + _input * (speed * Time.deltaTime));
+        
         if (_input.magnitude > 1)
         {
             _input.Normalize();
         }
         Vector3 movement = _input * (speed * Time.deltaTime);
-        _rigidbody.AddForce(movement, ForceMode.VelocityChange); //with drag of 10
-        //_rigidbody.velocity = movement;
+        _rigidbody.AddForce(movement, ForceMode.VelocityChange);
+
+        RotateToCameraDirection();
     }
 
-    /*void CustomGravity()
+    void RotateToCameraDirection()
     {
-        _rigidbody.AddForce(Vector3.down * 10 , ForceMode.Acceleration);
-    }*/
-
+        transform.forward = Vector3.ProjectOnPlane(camera.transform.forward, Vector3.up);
+    }
+    
+    
+    
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawSphere(transform.position + offset ,groundCheckRadius);
+        Gizmos.DrawSphere(transform.position + offset + (Vector3.down * groundCheckDistance),groundCheckRadius);
+    }
+    
     private bool CheckGrounded()
     {
         RaycastHit hitInfo;
-        if (Physics.SphereCast(transform.position, groundCheckRadius, Vector3.down, out hitInfo, groundCheckDistance))
+        if (Physics.SphereCast(transform.position + offset, groundCheckRadius, Vector3.down, out hitInfo, groundCheckDistance))
         {
             _rigidbody.drag = 10;
             speed = 100;
+
+            if (hitInfo.transform.tag == "Moving Platform")
+            {
+                transform.parent = hitInfo.transform;
+            }
+            else
+            {
+                transform.parent = null;
+            }
+            
             return true;
+        }
+        else
+        {
+            transform.parent = null;
         }
         _rigidbody.drag = 0;
         speed = 10;
         return false;
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.magenta;
-        Gizmos.DrawSphere(transform.position,groundCheckRadius);
-        Gizmos.DrawSphere(transform.position + (Vector3.down * groundCheckDistance),groundCheckRadius);
-    }
+
 }
